@@ -4,6 +4,7 @@
 
 3）This is just the prototype because we are still upgrading and optimizing the code
 
+4）Run train_ASTGCN.py directly to view the prediction performance.
   
 
 
