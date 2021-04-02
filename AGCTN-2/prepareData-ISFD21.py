@@ -1,29 +1,3 @@
-# 20210310
-# 支持按照METR-LA的数据格式，载入ISFD21数据 #DONE utils_ISFD21.py
-
-# 定义ISFD21数据的邻接矩阵，为了引入空间信息，暂时将股票距离作为邻接矩阵的计算依据 #DONE utils_ISFD21.py
-    # 根据股票的历史价格数据构建股票的邻接矩阵，有一些需要注意的点
-        # 1. 构建邻接矩阵时不能涉及到未来信息，即只用训练数据构建邻接矩阵
-        # 2. 原始STGCN邻接矩阵是静态的。如果引入动态的邻接矩阵是否会因为股票的随机特性引起模型异常？
-            # 反过来，原始的静态邻接矩阵是否能反映出交通路网的动态变化特征？
-                # 方案1： 根据股票的历史价格构建静态邻接矩阵（根据涨跌）#DONE utils_ISFD21.py
-                # 每支股票的adj_close 对应着一个涨跌序列构成，根据股票的涨跌序列（实际上也是一阶差分）计算序列之间的相似度构建邻接矩阵
-
-# 新增早停机制并存储最优模型,支持模型的载入 #DONE main.py
-    #回顾了一下早停策略，到这里也发现了之前的部分模型早停策略存在漏洞，正常应该是当触发早停机制时进行如下操作：
-        # 1. 停止训练
-        # 2. 载入PATIENCE前的模型参数为最优
-        # 之前只进行了第一步，导致模型可能不是最优的。
-# 新增测试部分，以及结果的输出,可视化 #DONE main.py
-# 新增预测结果指标评价 #DONE main.py
-
-# 20210311
-# 支持结果的检验，即针对每支股票计算对应的评估指标，而不是基于全局结果 #DONE main.py test.py
-    # 结果果然由问题，原始的数据还原方法不可用
-        # 支持结果的正确还原 #DONE main.py
-
-# 支持GPU运行程序
-
 import os
 import zipfile
 import numpy as np
@@ -88,18 +62,8 @@ def generate_dataset(X, num_timesteps_input, num_timesteps_output):
     # return torch.from_numpy(np.array(features)), torch.from_numpy(np.array(target))
     return torch.tensor([np.array(feature) for feature in features],dtype=torch.float),torch.tensor([np.array(targe) for targe in target],dtype=torch.float)
 
-# A, X, means, stds = load_metr_la_data()
-# A.shape:(207,207) (nodes_num,nodes,num)
-# X.shape:(207,2,34272) (nodes_num,features_num,data_length)
-# print('original A:')
-# print(A)
-# A = get_normalized_adj(A)
-# print("normalized A:")
-# print(A)
-# X_data.shape:(34253, 207, 10, 2) (data_length,nodes_num,input_timestep,features_num)
-# Y_data.shape:(34253,207,10) (data_length, nodes_num,output_timestep)
 
-# 获取指定文件夹目录下的所有文件名称（不包括扩展名）
+
 def file_name(file_dir):
     file_list = []
     for root, dirs, files in os.walk(file_dir):
@@ -163,9 +127,9 @@ def load_st_dataset(dataset):
                 df_group_data[code] = df_code_adj_close
                 df_code_label = df_code['Label'].values.tolist()
                 df_label_data[code] = df_code_label
-        # 矩阵转置，横向取数据
+
         df_group_data = pd.DataFrame(df_group_data.values.T, index=df_group_data.columns, columns=df_group_data.index)
-        # df_label_data = pd.DataFrame(df_label_data.values.T,index=df_label_data.columns,columns=df_label_data.index)
+
         data = np.transpose([df_group_data.values])
     elif dataset == 'ISFD21':
         # 载入ISFD21数据105
@@ -210,26 +174,6 @@ def load_st_dataset(dataset):
     X = X / stds.reshape(1, -1, 1)
     return X,means,stds,data
 
-    # Normalization using my Z-score method in main.py
-    # X = data
-    # return X
-
-
-# # For ISFD21 nodes_num = 105 features=1 length=2518  X.shape(105,1,2516)
-# X = load_st_dataset('ISFD21')
-# X = torch.from_numpy(X)
-# X = X.permute(1,2,0)
-# print('X.shape:{}'.format(X.shape)) # (nodes_num,features_num,data_length) (207,2,34272)
-# X_data, Y_data = generate_dataset(X,num_timesteps_input=10,num_timesteps_output=10)
-# print('X_data.shape:{}'.format(X_data.shape))
-# print(X_data)
-# print('Y_data.shape:{}'.format(Y_data.shape))
-# print(Y_data)
-
-
-
-
-# 计算两个向量的“空间”距离
 def compute_Euclidean_Distance(vector1,vector2):
     op1 = np.sqrt(np.sum(np.square(vector1 - vector2)))
     # op2 = np.linalg.norm(vector1 - vector2)
@@ -273,119 +217,6 @@ def generate_adj():
     print('ISFD21 Adj matrix save succcess! ')
     return adj_matrix
 
-# 生成静态邻接矩阵 road:'./data/ISFD21_adj.npy'
-# generate_adj()
-# 载入邻接矩阵
-# adj = np.load('./data/ISFD21_adj.npy')
-# print('adj:{}'.format(adj.shape))
-# print(adj)
-
-# # For ISFD21 nodes_num = 105 features=1 length=2518  X.shape(105,1,2516)
-
-
-# get X,A,means,stds
-#
-# X,means,stds = load_st_dataset('ISFD21')
-# print(means.shape)
-# print(stds.shape)
-
-# X = load_st_dataset('ISFD21') # load data
-
-# the flow to z-score the data (recover data is the same flow)
-#  step1: reshape for StandardScaler
-# X = np.reshape(X,(-1,X.shape[1]))
-# ss = StandardScaler()
-
-# step2: Z-score normalize
-# std_data = ss.fit_transform(X)
-
-# step3: recover shape for train
-# X = std_data
-# X = X[:,:,None]
-
-# step4: total review for transform and inverse_transform
-
-# # data normalized
-# ss = StandardScaler()
-# X = ss.fit_transform(np.reshape(X,(-1,X.shape[1])))[:,:,None]
-# print('X.shape:{}'.format(X.shape))
-# # data unnormalized
-# ori_data = ss.inverse_transform(np.reshape(X,(-1,X.shape[1])))[:,:,None]
-# print('ori_data.shape:{}'.format(ori_data.shape))
-
-
-# X = torch.from_numpy(X)
-# X = X.permute(1,2,0)
-
-# load static adj
-# adj = np.load('./data/ISFD21_adj.npy')
-
-
-# just for test
-# print('X.shape:{}'.format(X.shape)) # (nodes_num,features_num,data_length) (207,2,34272)
-# X_data, Y_data = generate_dataset(X,num_timesteps_input=10,num_timesteps_output=10)
-# print('X_data.shape:{}'.format(X_data.shape))
-# print(X_data)
-# print('Y_data.shape:{}'.format(Y_data.shape))
-# print(Y_data)
-
-num_timesteps_input = 12
-num_timesteps_output = 12
-X, means, stds, data = load_st_dataset('ISFD21')
-
-# test_size = int(X.shape[0] * 0.2)
-# train_size = X.shape[0] - test_size
-X = torch.from_numpy(X)
-X = X.permute(1, 2, 0)
-
-# load ISFD21-adj_matrix
-# A = np.load('./data/ISFD21_adj.npy') # static_adj_matrix with history price data
-
-# split data 6:2:2
-split_line1 = int(X.shape[2] * 0.6)
-split_line2 = int(X.shape[2] * 0.8)
-# print('test_length:{}'.format(X.shape[2]-split_line2))
-
-train_original_data = X[:, :, :split_line1]
-val_original_data = X[:, :, split_line1:split_line2]
-test_original_data = X[:, :, split_line2:]
-
-# change for 0.8 training data and 0.2 testing data
-# train_original_data = X[:, :, :train_size]
-# test_original_data = X[:, :, train_size:]
-training_input, training_target = generate_dataset(train_original_data,
-                                                   num_timesteps_input=num_timesteps_input,
-                                                   num_timesteps_output=num_timesteps_output)
-training_input = np.array(training_input)
-training_input = training_input.transpose((0,1,3,2))
-training_target = np.array(training_target)
-
-# training_target = np.array(training_target).transpose((0,1,3,2))
-print('training_input.shape:{}'.format(training_input.shape))
-print('training_target.shape:{}'.format(training_target.shape))
-# print(training_input.shape) # torch.Size([20549, 207, 12, 2]) (num_samples, num_vertices, num_timesteps_input, num_features). num_features = 2
-# print(training_input)
-# print('training_target:')
-# print(training_target.shape) # torch.Size([20549, 207, 3]) (num_samples, num_vertices, num_timesteps_output, num_features). num_features = 1
-# print(training_target)
-
-val_input, val_target = generate_dataset(val_original_data,
-                                         num_timesteps_input=num_timesteps_input,
-                                         num_timesteps_output=num_timesteps_output)
-
-val_input = np.array(val_input)
-val_input = val_input.transpose((0,1,3,2))
-val_target = np.array(val_target)
-
-test_input, test_target = generate_dataset(test_original_data,
-                                           num_timesteps_input=num_timesteps_input,
-                                           num_timesteps_output=num_timesteps_output)
-
-test_input = np.array(test_input)
-test_input = test_input.transpose((0,1,3,2))
-test_target = np.array(test_target)
-
-
 def normalization(train, val, test):
     '''
     Parameters
@@ -417,9 +248,3 @@ def normalization(train, val, test):
     test_norm = normalize(test)
 
     return {'_mean': mean, '_std': std}, train_norm, val_norm, test_norm
-
-norm_dic,norm_train,norm_val,norm_test = normalization(training_input,val_input,test_input)
-# print(norm_train)
-# print(norm_train.shape)
-print(norm_dic['_mean'])
-print(norm_dic['_std'])

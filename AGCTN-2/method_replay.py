@@ -91,9 +91,7 @@ def load_st_dataset(dataset):
             df_group_data[code] = df_code_adj_close
             df_code_label = df_code['Label'].values.tolist()
             df_label_data[code] = df_code_label
-        # 矩阵转置，横向取数据
         df_group_data = pd.DataFrame(df_group_data.values.T, index=df_group_data.columns, columns=df_group_data.index)
-        # df_label_data = pd.DataFrame(df_label_data.values.T,index=df_label_data.columns,columns=df_label_data.index)
         data = np.transpose([df_group_data.values])
     elif dataset == 'ISFD21':
         # SSFD-DATA-105 Nodes
@@ -137,9 +135,9 @@ def load_st_dataset(dataset):
             df_group_data[code] = df_code_adj_close
             df_code_label = df_code['Label'].values.tolist()
             df_label_data[code] = df_code_label
-        # 矩阵转置，横向取数据
+
         df_group_data = pd.DataFrame(df_group_data.values.T, index=df_group_data.columns, columns=df_group_data.index)
-        # df_label_data = pd.DataFrame(df_label_data.values.T,index=df_label_data.columns,columns=df_label_data.index)
+
         data = np.transpose([df_group_data.values])
     else:
         raise ValueError
@@ -202,20 +200,18 @@ def load_graphdata_channel_stp(Data_name,num_timesteps_input,num_timesteps_outpu
     Final Data prepare function for AASTGCN / ASTGCN
     :return:
     """
-    # # load data-ISFD21 载入 ISFD21原始数据
+    # # load data-ISFD21
     X, means, stds, data = load_st_dataset(Data_name)
     print('X.shape:{}'.format(X.shape)) # X.shape:(2516, 105, 1)
     # print(X)
-    # 划分训练集、验证集、测试集 split data 6:2:2
+
     split_line1 = int(X.shape[0] * 0.6)
     split_line2 = int(X.shape[0] * 0.8)
     train_original_data = X[:split_line1,:,:]
-    # print('train_original_data.shape:{}'.format(train_original_data.shape))
+
     val_original_data = X[split_line1:split_line2,:,:]
     test_original_data = X[split_line2:,:,:]
-    # 数据制作，对应PEMS数据格式
-        # PEMS数据格式：data:(10181,307,3,12) target:(10181,307,12) means:(1,1,3,1) stds:(1,1,3,1)
-        # ISFD数据格式：data:(2516,105,1,12) target:(2516,105,12) means:(1,1,1,1) stds:(1,1,1,1)
+
    # train valid test #DONE
     train_x, train_target = generate_dataset(train_original_data,
                                                       num_timesteps_input=num_timesteps_input,
