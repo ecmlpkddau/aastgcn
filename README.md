@@ -1,6 +1,10 @@
 # aastgcn
 Code and Data for ECMLPKDD2021 : Attention Based Adaptive Spatial-Temporal Graph Convolutional Networks for Stock Forecasting
 
+# Tools
+    Python-3.6
+    Pytorch-1.6.0
+
 # Dataset:
     ISFD21- 105 stocks from 11 Sectors-Industries
         Date:2001-01-01 to 2021-01-01
