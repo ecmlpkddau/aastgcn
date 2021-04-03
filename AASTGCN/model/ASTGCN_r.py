@@ -254,7 +254,7 @@ class AAST_block(nn.Module):
         # cheb gcn without SAT
         # spatial_gcn = self.cheb_conv(x)
 
-        # napl_conv gcn
+        # Adaptive gcn
         spatial_gcn = self.napl_conv_SAT(x, spatial_At,node_embeddings)
 
 
@@ -270,7 +270,7 @@ class AAST_block(nn.Module):
         return x_residual
 
 
-class ASTGCN_submodule(nn.Module):
+class ASTGCN_framework(nn.Module):
 
     def __init__(self, DEVICE, nb_block, in_channels, K, nb_chev_filter, nb_time_filter, time_strides, num_for_predict, len_input, num_of_vertices):
         '''
@@ -284,7 +284,7 @@ class ASTGCN_submodule(nn.Module):
         :param nb_predict_step:
         '''
 
-        super(ASTGCN_submodule, self).__init__()
+        super(ASTGCN_framework, self).__init__()
         self.num_node = num_of_vertices
         self.embed_dim = 30
         self.node_embeddings = nn.Parameter(torch.randn(self.num_node, self.embed_dim), requires_grad=True) # N,d
@@ -331,7 +331,7 @@ def make_model(DEVICE, nb_block, in_channels, K, nb_chev_filter, nb_time_filter,
     # L_tilde = scaled_Laplacian(adj_mx) # not need
     # cheb_polynomials = [torch.from_numpy(i).type(torch.FloatTensor).to(DEVICE) for i in cheb_polynomial(L_tilde, K)] # replace it with NAPL!
     # remove cheb_polynomials and replace it with NAPL in the forward method
-    model = ASTGCN_submodule(DEVICE, nb_block, in_channels, K, nb_chev_filter, nb_time_filter, time_strides, num_for_predict, len_input, num_of_vertices)
+    model = ASTGCN_framework(DEVICE, nb_block, in_channels, K, nb_chev_filter, nb_time_filter, time_strides, num_for_predict, len_input, num_of_vertices)
 
     for p in model.parameters():
         if p.dim() > 1:

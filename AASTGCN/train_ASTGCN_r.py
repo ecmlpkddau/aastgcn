@@ -17,10 +17,10 @@ from method_replay import load_graphdata_channel_stp
 
 #-------------------------------------------Experimental Settings with parser--------------------------------------------#
 parser = argparse.ArgumentParser()                                                                                       #
-parser.add_argument("--config", default='configurations/ISFD21_aastgcn.conf',                                            #
-                    type=str,help="configuration file path")                                                             #                                                                                          #
-# parser.add_argument("--config", default='configurations/SSFD21_aastgcn.conf', type=str,                                #
-#                     help="configuration file path")                                                                    #
+# parser.add_argument("--config", default='configurations/ISFD21_aastgcn.conf',                                            #
+#                     type=str,help="configuration file path")                                                             #                                                                                          #
+parser.add_argument("--config", default='configurations/SSFD21_aastgcn.conf', type=str,                                #
+                    help="configuration file path")                                                                    #
 
 args = parser.parse_args()
 config = configparser.ConfigParser()
