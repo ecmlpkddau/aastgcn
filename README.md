@@ -15,11 +15,11 @@ Code and Data for ECMLPKDD2021 : Attention Based Adaptive Spatial-Temporal Graph
         features: Open, High, Low, Close, Adj Close, Volume
 
 # AASTGCN-Run
-    # command: python3 ASTGCN_r.py
+    # Command: python3 ASTGCN_r.py
 
 # Tips
-    # Different prediction tasks can be performed by changing the conf file
-    # Random initialization of parameters will have a slight impact on the performance of the model
-    # the Embdedding dimension of ASTGCN_framework impact the performance of the model,
-          for SSFD21, the best emb_dim is 20 and for ISFD21 the best emb_dim is 30 with fine-tune
-    if you want to use AASTGCN for other datasets , remember to fine tune the emb_dim in AASTGCN_framework class
+    # Different prediction tasks can be performed by changing the conf file.
+    # Random initialization of parameters will have a slight impact on the performance of the model.
+    # The Embdedding dimension of ASTGCN_framework impact the performance of the model,
+        for SSFD21, the best emb_dim is 20 and for ISFD21 the best emb_dim is 30 with fine-tune.
+    # If you want to use AASTGCN for other datasets , remember to fine tune the emb_dim in AASTGCN_framework class.
