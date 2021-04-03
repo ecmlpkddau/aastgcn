@@ -33,6 +33,7 @@ training_config = config['Training']
 # aastgcn do not need adj matrix, just for astagcn
 # adj_filename = data_config['adj_filename']
 # graph_signal_matrix_filename = data_config['graph_signal_matrix_filename']
+
 if config.has_option('Data', 'id_filename'):
     id_filename = data_config['id_filename']
 else:

@@ -18,8 +18,8 @@ config.read(args.config)
 data_config = config['Data']
 training_config = config['Training']
 
-adj_filename = data_config['adj_filename']
-graph_signal_matrix_filename = data_config['graph_signal_matrix_filename']
+# adj_filename = data_config['adj_filename']
+# graph_signal_matrix_filename = data_config['graph_signal_matrix_filename']
 if config.has_option('Data', 'id_filename'):
     id_filename = data_config['id_filename']
 else:
@@ -162,9 +162,6 @@ def load_st_dataset(dataset):
     print('stds:{}'.format(stds))
     return X,means,stds,data
 
-    # Normalization using my Z-score method in main.py
-    # X = data
-    # return X
 
 def generate_dataset(X, num_timesteps_input, num_timesteps_output):
     """
@@ -197,12 +194,12 @@ def generate_dataset(X, num_timesteps_input, num_timesteps_output):
 
 def load_graphdata_channel_stp(Data_name,num_timesteps_input,num_timesteps_output, DEVICE, batch_size, shuffle=True):
     """
-    Final Data prepare function for AASTGCN / ASTGCN
+    Final Data prepare function for AASTGCN
     :return:
     """
     # # load data-ISFD21
     X, means, stds, data = load_st_dataset(Data_name)
-    print('X.shape:{}'.format(X.shape)) # X.shape:(2516, 105, 1)
+    print('X.shape:{}'.format(X.shape)) # X.shape:(2516, 105, 1) (len,nodes,feature_dim)
     # print(X)
 
     split_line1 = int(X.shape[0] * 0.6)
@@ -212,7 +209,7 @@ def load_graphdata_channel_stp(Data_name,num_timesteps_input,num_timesteps_outpu
     val_original_data = X[split_line1:split_line2,:,:]
     test_original_data = X[split_line2:,:,:]
 
-   # train valid test #DONE
+   # train valid test
     train_x, train_target = generate_dataset(train_original_data,
                                                       num_timesteps_input=num_timesteps_input,
                                                       num_timesteps_output=num_timesteps_output)
@@ -241,11 +238,11 @@ def load_graphdata_channel_stp(Data_name,num_timesteps_input,num_timesteps_outpu
     print('test_x.shape:{}'.format(test_x.shape))
     print('test_target.shape:{}'.format(test_target.shape))
 
-    # means stds #DONE
-    print('means.shape:{}'.format(means.shape))
-    print('stds.shape:{}'.format(stds.shape))
+    # means stds for normalize and recover the data
+    # print('means.shape:{}'.format(means.shape))
+    # print('stds.shape:{}'.format(stds.shape))
 
-    # torch 4 float to avoid error
+    # torch-float to avoid data type error
     train_x = np.array(train_x)
     train_target = np.array(train_target)
 
