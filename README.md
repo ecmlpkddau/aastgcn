@@ -15,3 +15,4 @@ Code and Data for ECMLPKDD2021 : Attention Based Adaptive Spatial-Temporal Graph
 
 # Tips
     # Different prediction tasks can be performed by changing the conf file
+    # Random initialization of parameters will have a slight impact on the performance of the model
