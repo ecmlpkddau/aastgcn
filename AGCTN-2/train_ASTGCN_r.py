@@ -10,39 +10,42 @@ import shutil
 import argparse
 import configparser
 from model.ASTGCN_r import make_model
-from lib.utils import compute_val_loss_mstgcn, predict_and_save_results_mstgcn
+from lib.utils import compute_val_loss_mstgcn, predict_and_save_results_mstgcn, get_normalized_adj
 from tensorboardX import SummaryWriter
 
 from method_replay import load_graphdata_channel_stp
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--config", default='configurations/ISFD21_astgcn.conf', type=str,
-                    help="configuration file path")
+#-------------------------------------------Experimental Settings with parser--------------------------------------------#
+parser = argparse.ArgumentParser()                                                                                       #
+parser.add_argument("--config", default='configurations/ISFD21_aastgcn.conf',                                            #
+                    type=str,help="configuration file path")                                                             #                                                                                          #
+# parser.add_argument("--config", default='configurations/SSFD21_aastgcn.conf', type=str,                                #
+#                     help="configuration file path")                                                                    #
 
-# parser.add_argument("--config", default='configurations/SSFD21_astgcn.conf', type=str,
-#                     help="configuration file path")
 args = parser.parse_args()
 config = configparser.ConfigParser()
 print('Read configuration file: %s' % (args.config))
 config.read(args.config)
+
 data_config = config['Data']
 training_config = config['Training']
 
-adj_filename = data_config['adj_filename']
-graph_signal_matrix_filename = data_config['graph_signal_matrix_filename']
+# aastgcn do not need adj matrix, just for astagcn
+# adj_filename = data_config['adj_filename']
+# graph_signal_matrix_filename = data_config['graph_signal_matrix_filename']
 if config.has_option('Data', 'id_filename'):
     id_filename = data_config['id_filename']
 else:
     id_filename = None
 
+# from ISFD21/SSFD21_astgcn.conf [Data]
 num_of_vertices = int(data_config['num_of_vertices'])
-points_per_hour = int(data_config['points_per_hour'])
 num_for_predict = int(data_config['num_for_predict'])
 len_input = int(data_config['len_input'])
 dataset_name = data_config['dataset_name']
 
+# from ISFD21/SSFD21_aastgcn.conf [Training]
 model_name = training_config['model_name']
-
 ctx = training_config['ctx']
 os.environ["CUDA_VISIBLE_DEVICES"] = ctx
 USE_CUDA = torch.cuda.is_available()
@@ -53,53 +56,47 @@ learning_rate = float(training_config['learning_rate'])
 epochs = int(training_config['epochs'])
 start_epoch = int(training_config['start_epoch'])
 batch_size = int(training_config['batch_size'])
-num_of_weeks = int(training_config['num_of_weeks'])
-num_of_days = int(training_config['num_of_days'])
-num_of_hours = int(training_config['num_of_hours'])
-time_strides = num_of_hours # what's this
+
+# astgcn's time level is 3 (week+day+hour), while time-level for aastgcn is 1 (day)
+# expanding the data may further improve model performance
+num_of_hours = int(training_config['time_level'])
+time_strides = num_of_hours #
+
 nb_chev_filter = int(training_config['nb_chev_filter'])
 nb_time_filter = int(training_config['nb_time_filter'])
 in_channels = int(training_config['in_channels'])
 nb_block = int(training_config['nb_block'])
 K = int(training_config['K'])
 
-folder_dir = '%s_h%dd%dw%d_channel%d_%e' % (model_name, num_of_hours, num_of_days, num_of_weeks, in_channels, learning_rate)
+folder_dir = '%s_h%d_%e' % (model_name, in_channels, learning_rate)
 print('folder_dir:', folder_dir)
 params_path = os.path.join('experiments', dataset_name, folder_dir)
 print('params_path:', params_path)
 
-# load PEMS data
-# train_loader, train_target_tensor, val_loader, val_target_tensor, test_loader, test_target_tensor, _mean, _std = load_graphdata_channel1(
-#     graph_signal_matrix_filename, num_of_hours,
-#     num_of_days, num_of_weeks, DEVICE, batch_size)
-# load PEMS adj
-# adj_mx, distance_mx = get_adjacency_matrix(adj_filename, num_of_vertices, id_filename)
+#-------------------------------------------Load data for AASTGCN--------------------------------------------#
 
-# load ISFD21 data
-# train_loader, train_target_tensor, val_loader, val_target_tensor, test_loader, test_target_tensor, _mean, _std = load_graphdata_channel_stp('ISFD21',num_timesteps_input=20, num_timesteps_output=20,DEVICE=DEVICE, batch_size=32)
-# load ISFD21 adj
-adj_mx = np.load('./data/ISFD21/distance.npy') # static_adj_matrix with history price data
-# load SSFD21 data
-train_loader, train_target_tensor, val_loader, val_target_tensor, test_loader, test_target_tensor, _mean, _std = load_graphdata_channel_stp('ISFD21',num_timesteps_input=5, num_timesteps_output=5,DEVICE=DEVICE, batch_size=32)
+## load ISFD21 adj just for astgcn
+## adj_mx = np.load('./data/ISFD21/distance.npy') # static_adj_matrix with history price data
+# adj normalized just for astgcn
+# adj_mx = get_normalized_adj(adj_mx)
 
 
-# 新增adj标准化操作
-def get_normalized_adj(A):
-    """
-    Returns the degree normalized adjacency matrix.
-    """
-    A = A + np.diag(np.ones(A.shape[0], dtype=np.float32))
-    D = np.array(np.sum(A, axis=1)).reshape((-1,))
-    D[D <= 10e-5] = 10e-5    # Prevent infs
-    diag = np.reciprocal(np.sqrt(D))
-    A_wave = np.multiply(np.multiply(diag.reshape((-1, 1)), A),
-                         diag.reshape((1, -1)))
-    return A_wave
-adj_mx = get_normalized_adj(adj_mx)
+# load ISFD21/SSFD21 data
+train_loader, train_target_tensor, val_loader, val_target_tensor, test_loader, test_target_tensor, \
+_mean, _std = load_graphdata_channel_stp(dataset_name, num_timesteps_input=len_input,
+                                                       num_timesteps_output=num_for_predict,
+                                                       DEVICE=DEVICE, batch_size=32)
 
+
+
+#-------------------------------------------Make AASTGCN--------------------------------------------#
+
+# make model
 net = make_model(DEVICE, nb_block, in_channels, K, nb_chev_filter, nb_time_filter, time_strides,
                  num_for_predict, len_input, num_of_vertices)
 
+
+#-------------------------------------------train + valid + test--------------------------------------------#
 
 def train_main():
     if (start_epoch == 0) and (not os.path.exists(params_path)):
@@ -122,7 +119,7 @@ def train_main():
     print('nb_time_filter\t', nb_time_filter)
     print('time_strides\t', time_strides)
     print('batch_size\t', batch_size)
-    print('graph_signal_matrix_filename\t', graph_signal_matrix_filename)
+    # print('graph_signal_matrix_filename\t', graph_signal_matrix_filename)
     print('start_epoch\t', start_epoch)
     print('epochs\t', epochs)
 
@@ -206,8 +203,8 @@ def predict_main(global_step, data_loader, data_target_tensor, _mean, _std, type
     :param global_step: int
     :param data_loader: torch.utils.data.utils.DataLoader
     :param data_target_tensor: tensor
-    :param mean: (1, 1, 3, 1)
-    :param std: (1, 1, 3, 1)
+    :param mean: (1, 1, 1, 1)
+    :param std: (1, 1, 1, 1)
     :param type: string
     :return:
     '''

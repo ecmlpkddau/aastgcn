@@ -35,10 +35,10 @@ class Spatial_Attention_layer(nn.Module):
 
         return S_normalized
 
-#TODO napl_conv_withSAT
+# Adaptive Graph Convolution-AASTBlock
 class napl_conv_withSAT(nn.Module):
     '''
-       K-order napl graph convolution
+       K-order Adaptive Graph Convolution
     '''
     def __init__(self, K, in_channels, out_channels):
         super(napl_conv_withSAT, self).__init__()
@@ -75,8 +75,8 @@ class napl_conv_withSAT(nn.Module):
             outputs.append(output.unsqueeze(-1))  # (b, N, F_out, 1)
         return F.relu(torch.cat(outputs, dim=-1))  # (b, N, F_out, T)
 
-
-class cheb_conv_withSAt(nn.Module): # change to napl_conv_withSAt
+# original cheb_conv in astgcn
+class cheb_conv_withSAt(nn.Module):
     '''
     K-order chebyshev graph convolution
     '''

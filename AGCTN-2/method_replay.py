@@ -9,7 +9,7 @@ DEVICE = torch.device('cuda:0')
 
 # prepare dataset
 parser = argparse.ArgumentParser()
-parser.add_argument("--config", default='./configurations/ISFD21_astgcn.conf', type=str,
+parser.add_argument("--config", default='./configurations/ISFD21_aastgcn.conf', type=str,
                     help="configuration file path")
 args = parser.parse_args()
 config = configparser.ConfigParser()
