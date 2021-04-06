@@ -6,23 +6,7 @@ import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
-def load_metr_la_data():
-    if (not os.path.isfile("data/adj_mat.npy")
-            or not os.path.isfile("data/node_values.npy")):
-        with zipfile.ZipFile("data/METR-LA.zip", 'r') as zip_ref:
-            zip_ref.extractall("data/")
 
-    A = np.load("data/adj_mat.npy")
-    X = np.load("data/node_values.npy").transpose((1, 2, 0))
-    X = X.astype(np.float32)
-
-    # Normalization using Z-score method
-    means = np.mean(X, axis=(0, 2))
-    X = X - means.reshape(1, -1, 1)
-    stds = np.std(X, axis=(0, 2))
-    X = X / stds.reshape(1, -1, 1)
-
-    return A, X, means, stds
 def get_normalized_adj(A):
     """
     Returns the degree normalized adjacency matrix.
@@ -74,74 +58,81 @@ def file_name(file_dir):
     return file_list
 def load_st_dataset(dataset):
     #output B, N, D
-    if dataset == 'PEMSD4':
-        data_path = os.path.join('../data/PeMSD4/pems04.npz')
-        data = np.load(data_path)['data'][:, :, 0]  #onley the first dimension, traffic flow data
-    elif dataset == 'PEMSD8':
-        data_path = os.path.join('../data/PeMSD8/pems08.npz')
-        data = np.load(data_path)['data'][:, :, 0]  #onley the first dimension, traffic flow data
-    elif dataset == 'ACL18':
-        Code_list = ['AEP', 'D', 'DUK', 'EXC', 'NEE', 'NGG', 'PCG', 'PPL', 'SO', 'SRE']
+    if dataset == 'SSFD21':
+        # SSFD-DATA-110 Nodes
+        ###########SSFD Sector##############
+        # Sector1
+        # Code_list = ['APD','BBL','BHP','CTA-PB','ECL','LIN','RIO','SCCO','SHW','VALE'] # 10
+        # Sector2
+        # Code_list = ['ATVI','BIDU','CMCSA','DIS','GOOG','NFLX','NTES','T','TMUS','VZ'] # 10
+        # Sector3
+        # Code_list = ['AMZN','BKNG','HD','LOW','MCD','MELI','NKE','SBUX','TM','TSLA'] # 10
+        # Sector4
+        # Code_list = ['BUD','COST','DEO','EL','KO','PEP','PG','PM','UL','WMT'] # 10
+        # Sector5
+        # Code_list = ['BP','COP','CVX','ENB','EQNR','PTR','RDS-B','SNP','TOT','XOM'] # 10
+        # Sector6
+        # Code_list = ['BAC','BML-PG','BML-PL','BRK-B','JPM','LFC','MA','MS','V','WFC'] # 10
+        # Sector7
+        # Code_list = ['ABT','JNJ','LLY','MDT','MRK','NVO','NVS','PFE','TMO','UNH'] # 10
+        # Sector8
+        # Code_list = ['BA','CAT','DE','GE','HON','LMT','MMM','RTX','UNP','UPS'] # 10
+        # Sector9
+        # Code_list = ['AMT','CSGP','DLR','EQIX','PLD','SBAC','SPG','SPG-PJ','WELL','WY'] # 10
+        # Sector10
+        # Code_list = ['AAPL','ADBE','ASML','AVGO','CRM','CSCO','INTC','MSFT','NVDA','TSM'] # 10
+        # Sector11
+        # Code_list = ['AEP','D','ES','EXC','NEE','NGG','PEG','SO','SRE','XEL'] # 10
+        # # Code_list = file_name('../data/SHY21-Arima-back')
 
-        data_path = os.path.join('../data/ACL18/ACL-V1_2.csv')
-        # Code_list = get_target_stock_id_set(data_path)
-        df = pd.read_csv(data_path)
-        df.dropna(axis=0, how='any', inplace=True)
-        df_group_data = pd.DataFrame()  # 存放group的Features
-        df_label_data = pd.DataFrame()  # 存放features对应的label 由于底层是回归任务，因此对应的label是value形式
-        len_count = 0
-        for code in Code_list:
-            print(code)
-            if code != 'GMRE':
-                df_code = df[(df['Code'] == code) & (df['Date'] >= '2014-01-01') & (df['Date'] <= '2016-01-01')]
-                len_df_code = len(df_code)
-                if len_df_code == 504:
-                    len_count += 1
-                    df_code_adj_close = df_code['Adj Close'].values.tolist()
-                    print('data_len:')
-                    print(len(df_code_adj_close))
-                    df_group_data[code] = df_code_adj_close
-                    df_code_label = df_code['Label'].values.tolist()
-                    df_label_data[code] = df_code_label
-        # 矩阵转置，横向取数据
-        print('right count:')
-        print(len_count)
-        df_group_data = pd.DataFrame(df_group_data.values.T, index=df_group_data.columns, columns=df_group_data.index)
-        # df_label_data = pd.DataFrame(df_label_data.values.T,index=df_label_data.columns,columns=df_label_data.index)
-        data = np.transpose([df_group_data.values])
-    elif dataset == 'SHY21':
-        # 载入SHY21数据110(不包括以下8个后加的股票（有一个原始数据集中有）)
-        Code_list = ['AVD','CF','CTA-PA','CTA-PB','FMC','ICL','IPI','MOS','SMG']
-        # Code_list = file_name('../data/SHY21-Arima')
-        # Code_list = file_name('../data/SHY21-Arima-back')
-        data_path = os.path.join('../data/ACL18/SHY-V1_11.csv')
+        ##############################
+        Code_list = file_name('./data/SSFD21-Arima')
+
+        ###############################
+        data_path = os.path.join('./data/SSFD21/SSFD-V1_11.csv')
         df = pd.read_csv(data_path)
         df.dropna(axis=0, how='any', inplace=True)
         df_group_data = pd.DataFrame()  # 存放group的Features
         df_label_data = pd.DataFrame()  # 存放features对应的label 由于底层是回归任务，因此对应的label是value形式
         for code in Code_list:
-            print(code)
-            if code != 'GMRE':
-                df_code = df[(df['Code'] == code)]
-                df_code_adj_close = df_code['Adj Close'].values.tolist()
-                df_group_data[code] = df_code_adj_close
-                df_code_label = df_code['Label'].values.tolist()
-                df_label_data[code] = df_code_label
-
+            # print(code)
+            df_code = df[(df['Code'] == code)]
+            df_code_adj_close = df_code['Adj Close'].values.tolist()
+            df_group_data[code] = df_code_adj_close
+            df_code_label = df_code['Label'].values.tolist()
+            df_label_data[code] = df_code_label
         df_group_data = pd.DataFrame(df_group_data.values.T, index=df_group_data.columns, columns=df_group_data.index)
-
         data = np.transpose([df_group_data.values])
     elif dataset == 'ISFD21':
-        # 载入ISFD21数据105
+        # SSFD-DATA-105 Nodes
+        ##########
         # Sector1
-        # Code_list = ['AVD','CF','CTA-PA','CTA-PB','FMC','ICL','IPI','MOS','SMG']
+        # Code_list = ['AVD','CF','CTA-PA','CTA-PB','FMC','ICL','IPI','MOS','SMG'] # 9
         # Sector2
-        # Code_list = ['AMOV','AMX','BCE','CHT','ORAN','T','TMUS','TU','VOD','VZ']
+        # Code_list = ['AMOV','AMX','BCE','CHT','ORAN','T','TMUS','TU','VOD','VZ'] # 10
+        # Sector3
+        # Code_list = ['ALV','BWA','DAN','DORM','GNTX','GT','LEA','LKQ','MGA','VC'] # 10
+        # Sector4
+        # Code_list = ['ADM','ALCO','BG','CALM','CHSCP','FDP','IBA','LMNR','TSN'] # 9
+        # Sector5
+        # Code_list = ['CEO','CLR','CNQ','COP','DVN','EOG','HES','MRO','OXY','PXD'] # 10
+        # Sector6
+        # Code_list = ['AMP','BAM','BEN','BK','BLK','BX','KKR','NTRS','STT','TROW'] # 10
+        # Sector7
+        # Code_list = ['CERN','CPSI','HMSY','HSTM','MDRX','NXGN','OMCL'] # 7
+        # Sector8
+        # Code_list = ['AIT','DXPE','FAST','GWW','LAWS','MSM','PKOH','SYX','WCC','WSO'] # 10
+        # Sector9
+        # Code_list = ['CBRE','CIGI','CSGP','CSR','FRPH','IRCP','JLL','KW','NTP','TCI'] # 10
         # Sector10
-        # Code_list = ['ADSK','ANSS','CDNS','CRM','CTXS','INTU','PTC','SAP','SSNC','TYL']
+        # Code_list = ['ADSK','ANSS','CDNS','CRM','CTXS','INTU','PTC','SAP','SSNC','TYL'] # 10
+        # Sector11
+        # Code_list = ['AEP','DTE','DUK','ED','ES','NEE','PCG','SO','WFC','XEL'] #10
+
+        ##########
         # Code_list = ['CDNS','CTXS','PTC','SAP','SSNC']
         # Code_list = ['ADSK','ANSS','CRM','INTU','TYL']
-
+        #########################################
         Code_list = file_name('./data/ISFD21-Arima')
         data_path = os.path.join('./data/ISFD21/ISFD-V1_11.csv')
         df = pd.read_csv(data_path)
@@ -149,16 +140,14 @@ def load_st_dataset(dataset):
         df_group_data = pd.DataFrame()  # 存放group的Features
         df_label_data = pd.DataFrame()  # 存放features对应的label 由于底层是回归任务，因此对应的label是value形式
         for code in Code_list:
-            # print(code)
-            if code != 'GMRE':
-                df_code = df[(df['Code'] == code)]
-                df_code_adj_close = df_code['Adj Close'].values.tolist()
-                df_group_data[code] = df_code_adj_close
-                df_code_label = df_code['Label'].values.tolist()
-                df_label_data[code] = df_code_label
-        # 矩阵转置，横向取数据
+            df_code = df[(df['Code'] == code)]
+            df_code_adj_close = df_code['Adj Close'].values.tolist()
+            df_group_data[code] = df_code_adj_close
+            df_code_label = df_code['Label'].values.tolist()
+            df_label_data[code] = df_code_label
+
         df_group_data = pd.DataFrame(df_group_data.values.T, index=df_group_data.columns, columns=df_group_data.index)
-        # df_label_data = pd.DataFrame(df_label_data.values.T,index=df_label_data.columns,columns=df_label_data.index)
+
         data = np.transpose([df_group_data.values])
     else:
         raise ValueError
@@ -168,10 +157,19 @@ def load_st_dataset(dataset):
 
     # Normalization using Z-score method
     X = data
-    means = np.mean(X, axis=(0, 2))
+    print('X.shape:{}'.format(X.shape))
+    # means = np.mean(X, axis=(0, 2))
+    means = np.mean(X, axis=(0, 1))
+
     X = X - means.reshape(1, -1, 1)
-    stds = np.std(X, axis=(0, 2))
+    # stds = np.std(X, axis=(0, 2))
+    stds = np.std(X, axis=(0, 1))
     X = X / stds.reshape(1, -1, 1)
+
+    means = means.reshape(1,1,1,1)
+    stds = stds.reshape(1,1,1,1)
+    print('means:{}'.format(means))
+    print('stds:{}'.format(stds))
     return X,means,stds,data
 
 def compute_Euclidean_Distance(vector1,vector2):
@@ -182,8 +180,8 @@ def compute_Euclidean_Distance(vector1,vector2):
 def generate_adj():
     X = load_st_dataset('ISFD21')
     # print('X.shape:{}'.format(X.shape))
-    # step1 根据训练集数据生成每支股票的涨跌序列
-    # 获取训练集数据
+    # step1 Generate the rise and fall sequence of each stock based on the training set data
+    # Get training data
     code_list = file_name('./data/ISFD21-Arima')
     test_size = int(X.shape[0] * 0.2)
     train_size = X.shape[0] - test_size
@@ -191,13 +189,14 @@ def generate_adj():
     diff_list = []
     for code in code_list:
         # print('code:{}'.format(code))
-        # 拿到每支股票（训练部分）的一阶差分数据
+        # Get the first-order difference data of each stock (training part)
         stock_data = total_data[total_data['Code']==code][:train_size]['Diff'].values
         # print(stock_data)
         diff_list.append(stock_data)
     # print('diff_list.shape:{}'.format(len(diff_list)))
 
-    # step2 计算每支股票涨跌序列相似度 利用相似度结果构建105*105的静态邻接矩阵
+    # step2 Calculate the similarity of each stock's rise and fall sequence Use the similarity results
+    #       to construct a 105*105 static adjacency matrix
 
     # method-1 cosine-similarity
     adj_matrix = cosine_similarity(diff_list)
